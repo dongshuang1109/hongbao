@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>点红包得奖励金</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">		
+		<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1">
+		<!--在iPhone 手机上禁止了把数字转化为拨号链接-->
+	    <meta content="telephone=no" name="format-detection" />
+	    <!--删除默认的苹果工具栏和菜单栏-->
+	    <meta content="yes" name="apple-mobile-web-app-capable">
+	    <!-- 网站开启对web app程序的支持，在web app应用下状态条（屏幕顶部条）的颜色，默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）-->
+   		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="stylesheet" href="css/demo.css" type="text/css" />
+        <link rel="stylesheet" href="css/first.css" type="text/css" />
+        <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.4.0.js"></script>
+	</head>
+	<body>
+        <div class="wrap">
+            <ul class='redEnvelope'></ul>
+            <div class="option"><p class='countMoney'>获得红包:<b>0</b>元</p><p class='countTime'>剩余<b>0</b>秒</p></div>
+            <div class="backward shade">
+                <span></span>
+                <p></p>
+            </div>
+        </div>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script>
+        var waittime=3;//等待时长
+        var win=0;
+        var envelopTime=20;//红包雨时长
+        var timeloop;
+        var num=0;
+        var nums=0;
+        var clickcount =0;
+        var totalmoney=0.5;//5元
+        $(function(){
+            win = (parseInt($(".redEnvelope").css("width"))) - 60;
+            $(".wrap").height($(window).height());
+            //等待红包雨开始
+            initializeTime();
+            var del = function(){
+                nums++;
+                $(".li" + nums).remove();
+                setTimeout(del,300)
+            }
+            document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {
+                // 发送给好友
+                WeixinJSBridge.on('menu:share:appmessage', function(argv){
+                    shareFriend();
+                });
+                // 分享到朋友圈
+                WeixinJSBridge.on('menu:share:timeline', function(argv){
+                    shareTimeline();
+                }); 
+            }, false);
+        });
+        function initializeTime(){
+            if(waittime>0){
+                $(".backward span").html(waittime);
+            }else if(waittime==0){
+                $(".backward").removeClass("shade");
+                $(".backward span").hide();
+                $(".backward p").html("go!!!").show("slow");
+            }else{
+				$(".backward").removeClass("shade").hide();
+                $(".backward span").hide();
+                envelopCount();
+                addEnvelop();
+                return;
+            }
+            setTimeout(initializeTime,1000);
+            waittime--;
+        }
+        function envelopCount(){
+            if(envelopTime>0){
+                // addEnvelop();
+                $(".option").show();
+                $(".countTime b").text(envelopTime);
+            }else{
+                clearInterval(timeloop);
+                $(".option").hide();
+                $(".backward").show();
+                $(".backward p").html("红包结束!!!</br>恭喜您获得"+clickcount+"元").show("slow");
+				return;
+            }
+            setTimeout(envelopCount,1000);
+            envelopTime--;
+        }
+        function addEnvelop(){
+            timeloop=setInterval(addLoop,300);
+        }
+        function addLoop(){
+            var hb = parseInt(Math.random() * (3 - 1) + 1);
+            var Wh =60;
+            var Left = parseInt(Math.random() * (win - 0) + 0);
+            var rot = (parseInt(Math.random() * (35 - (-30)) - 45)) + "deg";
+            num++;
+            if(totalmoney>0){
+                var money=getRandom(0, totalmoney / 2).toFixed(2);
+                if(money<0.01){
+                    money=0.01;
+                }
+                totalmoney=totalmoney-money;
+            }else{
+                money=0;
+                totalmoney=0;
+            }
+            // console.log(totalmoney+"现在的钱"+money);
+            $(".redEnvelope").append("<li class='li" + num + "' amount='"+money+"'><a href='javascript:;'><img src='images/hb_" + hb + ".png'></a></li>");
+            $(".li" + num).css({
+                "left": Left,
+            });
+            $(".li" + num + " a img").css({
+                "width": Wh,
+                "transform": "rotate(" + rot + ")",
+                "-webkit-transform": "rotate(" + rot + ")",
+                "-ms-transform": "rotate(" + rot + ")", /* Internet Explorer */
+                "-moz-transform": "rotate(" + rot + ")", /* Firefox */
+                "-webkit-transform": "rotate(" + rot + ")",/* Safari 和 Chrome */
+                "-o-transform": "rotate(" + rot + ")", /* Opera */
+                'z-index':99,
+            });	
+            $(".li" + num).animate({'top':$(window).height()},2000,function(){
+                //删掉已经显示的红包
+                this.remove();
+            });
+            //点击红包的时候弹出模态层
+            $(".li" + num).click(function(){
+                console.log($(this).attr("amount")+","+parseFloat($(this).attr("amount")));
+                clickcount=(parseFloat(clickcount)+parseFloat($(this).attr("amount"))).toFixed(2);
+                console.log(clickcount);
+                $(".countMoney b").text(clickcount);
+                $(this).find("img").attr('src','/images/open.png');
+                $(this).stop().animate({top:-$(window).height()},"slow");
+            });
+        }
+         //随机数的函数
+        function getRandom(one, two) {
+            return Math.random() * (two - one) + one;
+        }
+        //分享朋友圈
+        var shareData = {
+            img_url: "/images/hb_1.png",
+            img_width: 200,
+            img_height: 200,
+            link: location.href,
+            desc: '分享可免费抢红包哦',
+            title: '抢红包哦',
+            appid: 0
+        };
+       
+        function shareTimeline() {
+            WeixinJSBridge.invoke('shareTimeline', shareData, function(res) {
+                validateShare(res);
+                _report('timeline', res.err_msg);
+            });
+        }
+        
+        function shareFriend() {
+            WeixinJSBridge.invoke('sendAppMessage', shareData, function(res) {
+                validateShare(res);
+                _report('send_msg', res.err_msg);
+            });
+        }
+        
+        function validateShare(res) {
+            if(res.err_msg != 'send_app_msg:cancel' && res.err_msg != 'share_timeline:cancel') {
+            //分享完毕回调
+            }
+        }
+
+        </script>
+	</body>
+</html>
